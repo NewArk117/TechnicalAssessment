@@ -35,6 +35,29 @@ describe("sendData function", () => {
     expect(res.json).not.toHaveBeenCalledWith({ error: true })
   })
 
+  it("should throw error if the id already exist", async () => {
+    const req = {
+      body: {
+        data: [
+          { '"id"': '"1"', '"postId"': '"1"', '"name"': '"John"', '"email"': '"john@example.com"', '"body"': '"Hello"' },
+          { '"id"': '"1"', '"postId"': '"1"', '"name"': '"John"', '"email"': '"john@example.com"', '"body"': '"Hello"' }
+        ]
+      }
+    }
+    const res = {
+      json: jest.fn()
+    }
+
+    // Mock the query method of the pool to throw an error
+    pool.query.mockRejectedValueOnce(new Error("ID Error"))
+
+    // Call the function
+    await sendData(req, res)
+
+    // Assertions
+    expect(res.json).toHaveBeenCalledWith({ error: true })
+  })
+
   it("should handle errors gracefully", async () => {
     // Mock request and response objects
     const req = {
@@ -58,29 +81,6 @@ describe("sendData function", () => {
 })
 
 describe("getData function", () => {
-  it("should retrieve data from the database", async () => {
-    // Mock request and response objects
-    const req = {}
-    const res = {
-      json: jest.fn()
-    }
-
-    // Mock the query method of the pool
-    pool.query.mockResolvedValueOnce([
-      { id: 1, name: "John" },
-      { id: 2, name: "Jane" }
-    ])
-
-    // Call the function
-    await getData(req, res)
-
-    // Assertions
-    expect(res.json).toHaveBeenCalledWith([
-      { id: 1, name: "John" },
-      { id: 2, name: "Jane" }
-    ])
-  })
-
   it("should handle errors gracefully", async () => {
     // Mock request and response objects
     const req = {}

@@ -1,3 +1,4 @@
+//Imports
 import React, { useEffect, useState } from "react"
 import ReactDOM from "react-dom/client"
 import LinearProgress from "@material-ui/core/LinearProgress"
@@ -8,7 +9,9 @@ import { TablePagination, IconButton } from "@material-ui/core"
 import SearchBar from "material-ui-search-bar"
 import { ToastContainer, toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+
 function Main() {
+  //Init States
   const [file, setFile] = useState(null)
   const [progress, setProgress] = useState(0)
   const [uploading, setUploading] = useState(false)
@@ -22,62 +25,65 @@ function Main() {
   const [originalData, setOriginalData] = useState([])
   const [searchBy, setSearchBy] = useState("id") // Default search by "id"
 
+  //Handle the file targeted to be upload
   const handleFileChange = event => {
     if (event.target.files[0] && event.target.files[0].name) {
       setFilename(event.target.files[0].name)
       setFile(event.target.files[0])
     } else {
-      console.log(file)
     }
   }
 
+  //X icon to remove target file
   const clearFilename = () => {
     setFilename("")
     setFile(null)
   }
+  //Handle processing of file and get data from csv
   const handleUpload = () => {
-    console.log(file)
     if (file) {
       const formData = new FormData()
       formData.append("file", file)
 
-      // Read file content
+      //Read file content
       const reader = new FileReader()
       reader.onload = function (event) {
         const csvContent = event.target.result
-        // Split the CSV content into rows
+        //Split the CSV content into rows
         const rows = csvContent.split("\n")
-        // Extract headers from the first row
+        //Extract headers from the first row
         const headers = rows[0].split(",")
-        // Initialize an array to store the parsed data
+        //Initialize an array to store the parsed data
         const data = []
 
-        // Parse data skipping the first row (which contains headers)
+        //Parse data skipping the first row (which contains headers)
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i].split(",")
-          // Create an object to represent each row of data
+          //Create an object to represent each row of data
           const rowData = {}
-          // Store each column value with its corresponding header
+          //Store each column value with its corresponding header
           for (let j = 0; j < headers.length; j++) {
             rowData[headers[j]] = row[j]
           }
-          // Add the row data object to the data array
+          //Add the row data object to the data array
           data.push(rowData)
         }
+        //Add data to state and set uploading to true
         setHeaders(headers)
-
         setData(data)
-        sendData(data)
+        sendData(headers, data)
         setUploading(true)
       }
       reader.readAsText(file)
     }
   }
-  const sendData = async data => {
+
+  //Send the processed data to backend
+  const sendData = async (headers, data) => {
     try {
       const response = await Axios.post(
         `http://localhost:8080/sendData`,
-        { data },
+        { headers, data },
         {
           onUploadProgress: progressEvent => {
             const { loaded, total } = progressEvent
@@ -115,42 +121,56 @@ function Main() {
         })
       }
 
-      // Once the upload is complete, you can call getData() or perform any other actions.
+      //Once the upload is complete use getdata to get the data of the file
       getData()
       setUploading(false)
       setProgress(0)
     } catch (error) {
-      // Handle error if needed
-      console.log("Inhere")
+      console.error("Error Uploading data:", error)
     }
   }
+  //To get the data from the backend database
   const getData = async () => {
     try {
       const response = await Axios.get(`http://localhost:8080/getData`)
-      console.log(response.data)
+      //console.log(response.data)
 
       setListData(response.data)
       setOriginalData(response.data)
-    } catch (error) {}
+
+      if (response.data.length > 0) {
+        const firstObject = response.data[0]
+        const keysOfFirstObject = Object.keys(firstObject)
+        setHeaders(keysOfFirstObject)
+      } else {
+        console.log("Response data array is empty.")
+      }
+    } catch (error) {
+      // Handle error
+    }
   }
 
+  //handle the jumping from page to page
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
   }
 
+  //handle the no of rows to per page
   const handleChangeRowsPerPage = event => {
     setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
   }
 
+  //To filter what the user can search by
   const handleSearchByChange = event => {
     getData()
     setSearchBy(event.target.value)
   }
 
+  //Handle the user search request
   const requestSearch = searchedVal => {
     if (searchedVal.trim() === "") {
-      getData() // Call getData() when the search bar is empty
+      getData() // Call getData when the search bar is empty
     } else {
       const filteredRows = originalData.filter(row => {
         // Check if the selected searchBy attribute exists and filter based on it
@@ -160,15 +180,18 @@ function Main() {
     }
   }
 
+  //To fill back the table if the search bar is empty
   const cancelSearch = () => {
     setSearched("")
     requestSearch(searched)
     getData()
   }
 
+  //Fill the table with existing data if there is data inside the database at the start
   useEffect(() => {
     getData()
   }, [])
+
   return (
     <div>
       <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -206,16 +229,16 @@ function Main() {
           <SearchBar value={searched} onChange={searchVal => requestSearch(searchVal)} onCancelSearch={() => cancelSearch()} />
         </div>
       </div>
-
+      {/*Main Table*/}
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Id</TableCell>
-              <TableCell>PostId</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Body</TableCell>
+              <TableCell>{headers[0]}</TableCell>
+              <TableCell>{headers[1]}</TableCell>
+              <TableCell>{headers[2]}</TableCell>
+              <TableCell>{headers[3]}</TableCell>
+              <TableCell>{headers[4]}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
