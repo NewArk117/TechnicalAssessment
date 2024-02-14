@@ -13,6 +13,7 @@ exports.sendData = async function (req, res) {
       email = data[i]['"email"'].replace(/"/g, "")
       body = data[i]['"body"'].replace(/"/g, "")
       result = await pool.query(query, [postId, id, name, email, body])
+      return res.json({ success: true })
     }
   } catch (err) {
     return res.json({ error: true })

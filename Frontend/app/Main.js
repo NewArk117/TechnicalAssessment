@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableContainer, FormControl, InputLabel, S
 import ClearIcon from "@material-ui/icons/Clear"
 import { TablePagination, IconButton } from "@material-ui/core"
 import SearchBar from "material-ui-search-bar"
+import { ToastContainer, toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 function Main() {
   const [file, setFile] = useState(null)
   const [progress, setProgress] = useState(0)
@@ -73,7 +75,7 @@ function Main() {
   }
   const sendData = async data => {
     try {
-      await Axios.post(
+      const response = await Axios.post(
         `http://localhost:8080/sendData`,
         { data },
         {
@@ -89,18 +91,44 @@ function Main() {
           }
         }
       )
+      if (response.data.error == true) {
+        toast.error("Upload Failed", {
+          position: "top-right",
+          autoClose: 1000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light"
+        })
+      } else {
+        toast.success("Upload Successfully", {
+          position: "top-right",
+          autoClose: 1000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light"
+        })
+      }
+
       // Once the upload is complete, you can call getData() or perform any other actions.
       getData()
       setUploading(false)
       setProgress(0)
     } catch (error) {
       // Handle error if needed
+      console.log("Inhere")
     }
   }
   const getData = async () => {
     try {
       const response = await Axios.get(`http://localhost:8080/getData`)
       console.log(response.data)
+
       setListData(response.data)
       setOriginalData(response.data)
     } catch (error) {}
@@ -204,6 +232,7 @@ function Main() {
         </Table>
         <TablePagination rowsPerPageOptions={[5, 10, 25]} component="div" count={listData.length} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
       </TableContainer>
+      <ToastContainer />
     </div>
   )
 }
