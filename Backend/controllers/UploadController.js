@@ -4,8 +4,6 @@ exports.sendData = async function (req, res) {
   const { data } = req.body
 
   let postId, id, name, email, body
-  //id = data[0]['"id"'].replace(/"/g, "")
-  //console.log(id)
   const query = "INSERT INTO data(postId,id,name,email,body)  VALUES (?, ?, ?, ?, ?)"
   try {
     for (let i = 0; i < data.length; i++) {
@@ -26,8 +24,6 @@ exports.getData = async function (req, res) {
   try {
     const results = await pool.query(query)
     // Extracting rows from the results
-    console.log(results[0].length)
-
     const data = results[0].map(row => ({
       id: row.id,
       postId: row.postId,
