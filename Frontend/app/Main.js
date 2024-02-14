@@ -19,13 +19,19 @@ function Main() {
   const [searched, setSearched] = useState("")
   const [originalData, setOriginalData] = useState([])
   const [searchBy, setSearchBy] = useState("id") // Default search by "id"
+
   const handleFileChange = event => {
-    setFile(event.target.files[0])
-    setFilename(event.target.files[0].name)
+    if (event.target.files[0] && event.target.files[0].name) {
+      setFilename(event.target.files[0].name)
+      setFile(event.target.files[0])
+    } else {
+      console.log(file)
+    }
   }
 
   const clearFilename = () => {
     setFilename("")
+    setFile(null)
   }
   const handleUpload = () => {
     console.log(file)
@@ -57,33 +63,19 @@ function Main() {
           data.push(rowData)
         }
         setHeaders(headers)
+
         setData(data)
-        sendData(headers, data)
+        sendData(data)
+        setUploading(true)
       }
       reader.readAsText(file)
-      // Simulating upload process
-      setUploading(true)
-      //setTimeout(() => {
-      // Simulate progress
-      //   let progress = 0
-      //   const interval = setInterval(() => {
-      //     progress += Math.random() * 10
-      //     setProgress(Math.min(progress, 100))
-      //     if (progress >= 100) {
-      //       clearInterval(interval)
-      //       getData()
-      //       setUploading(false)
-      //       setProgress(0)
-      //     }
-      //   }, 200)
-      // }, 1000)
     }
   }
-  const sendData = async (headers, data) => {
+  const sendData = async data => {
     try {
       await Axios.post(
         `http://localhost:8080/sendData`,
-        { headers, data },
+        { data },
         {
           onUploadProgress: progressEvent => {
             const { loaded, total } = progressEvent
@@ -151,34 +143,42 @@ function Main() {
   }, [])
   return (
     <div>
-      <div style={{ marginBottom: "10px" }}>
-        <input accept=".csv" id="contained-button-file" type="file" style={{ display: "none" }} onChange={handleFileChange} />
-        <label htmlFor="contained-button-file">
-          <Button variant="contained" color="primary" component="span">
-            Choose CSV File
+      <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* Upload buttons */}
+        <div>
+          <input accept=".csv" id="contained-button-file" type="file" style={{ display: "none" }} onChange={handleFileChange} />
+          <label htmlFor="contained-button-file">
+            <Button variant="contained" color="primary" component="span">
+              Choose CSV File
+            </Button>
+          </label>
+          <Button variant="contained" color="primary" onClick={handleUpload} disabled={!file || uploading} style={{ marginLeft: "10px" }}>
+            Upload
           </Button>
-        </label>
-        <Button variant="contained" color="primary" onClick={handleUpload} disabled={!file || uploading} style={{ marginLeft: "10px" }}>
-          Upload
-        </Button>
-        <TextField value={filename}></TextField>
-        <IconButton onClick={clearFilename}>
-          <ClearIcon />
-        </IconButton>
-        {uploading && <LinearProgress variant="determinate" value={progress} />}
+          <TextField value={filename}></TextField>
+          <IconButton onClick={clearFilename}>
+            <ClearIcon />
+          </IconButton>
+          {uploading && <LinearProgress variant="determinate" value={progress} />}
+        </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
-        <SearchBar value={searched} onChange={searchVal => requestSearch(searchVal)} onCancelSearch={() => cancelSearch()} style={{ marginRight: "10px" }} />
-        <FormControl>
-          <Select labelId="search-by-label" id="search-by-select" value={searchBy} onChange={handleSearchByChange} style={{ minWidth: "120px" }}>
-            <MenuItem value="id">ID</MenuItem>
-            <MenuItem value="postId">Post ID</MenuItem>
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="email">Email</MenuItem>
-            <MenuItem value="body">Body</MenuItem>
-          </Select>
-        </FormControl>
+
+      {/* Search bar and dropdown */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <FormControl>
+            <Select labelId="search-by-label" id="search-by-select" value={searchBy} onChange={handleSearchByChange} style={{ minWidth: "120px", marginRight: "10px" }}>
+              <MenuItem value="id">ID</MenuItem>
+              <MenuItem value="postId">Post ID</MenuItem>
+              <MenuItem value="name">Name</MenuItem>
+              <MenuItem value="email">Email</MenuItem>
+              <MenuItem value="body">Body</MenuItem>
+            </Select>
+          </FormControl>
+          <SearchBar value={searched} onChange={searchVal => requestSearch(searchVal)} onCancelSearch={() => cancelSearch()} />
+        </div>
       </div>
+
       <TableContainer>
         <Table>
           <TableHead>

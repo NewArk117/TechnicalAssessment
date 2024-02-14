@@ -4,6 +4,7 @@
   "description": "backend",
   "main": "back.js",
   "scripts": {
+    "test": "jest test.js",
     "start": "node back.js",
     "dev": "nodemon app"
   },
